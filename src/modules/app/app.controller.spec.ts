@@ -1,36 +1,46 @@
 import { Test, TestingModule } from "@nestjs/testing"
+import { PrismaService } from "../database/service"
 import { AppController } from "./controller"
 import { AppService } from "./service"
 
 describe("AppController", () => {
   let appController: AppController
-  let appService: AppService
+  let prismaService: PrismaService
 
   beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
+    const mockPrismaService = {
+      isDatabaseConnected: jest.fn().mockResolvedValue(true),
+    }
+
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [
+        AppService,
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
+      ],
     }).compile()
 
-    appController = app.get<AppController>(AppController)
-    appService = app.get<AppService>(AppService)
+    appController = module.get<AppController>(AppController)
+    prismaService = module.get<PrismaService>(PrismaService)
   })
 
-  afterEach(() => {
-    jest.clearAllMocks()
-  })
+  describe("healthCheck", () => {
+    it("should return health check status with database connected", async () => {
+      const result = await appController.healthCheck()
 
-  describe("health check", () => {
-    it("should return health check status", () => {
-      const mockHealthCheck = {
+      expect(result).toMatchObject({
         status: "ok",
-        environment: "test",
+        environment: expect.any(String),
         timestamp: expect.any(String),
         uptime: expect.any(Number),
-      }
-
-      const result = appController.healthCheck()
-      expect(result).toEqual(mockHealthCheck)
+        database: {
+          connected: true,
+        },
+      })
+      expect(prismaService.isDatabaseConnected).toHaveBeenCalledTimes(1)
     })
   })
 })

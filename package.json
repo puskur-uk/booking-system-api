@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "npx @biomejs/biome check --write .",
     "start": "nest start",
-    "start:dev": "nest start --watch",
+    "start:dev": "npx prisma generate && npx nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "test": "jest",
@@ -22,6 +22,7 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@prisma/client": "^6.7.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -38,6 +39,7 @@
     "@types/supertest": "^6.0.2",
     "globals": "^16.0.0",
     "jest": "^29.7.0",
+    "prisma": "^6.7.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
@@ -61,6 +63,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    }
   }
 }
