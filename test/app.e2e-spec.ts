@@ -23,7 +23,7 @@ describe("AppController (e2e)", () => {
   describe("GET /health", () => {
     it("should return health check status", () => {
       return request(app.getHttpServer())
-        .get("/health")
+        .get("/api/health")
         .expect(200)
         .expect((res) => {
           expect(res.body).toEqual({
