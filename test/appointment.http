@@ -1,0 +1,89 @@
+# Environment Variables
+@baseUrl = http://localhost:3000/api
+@providerId = 123e4567-e89b-12d3-a456-426614174000
+@patientId = 987fcdeb-51a2-43d8-b4c5-9876543210ab
+
+### 1. Create a provider first
+# @name createProvider
+POST {{baseUrl}}/providers HTTP/1.1
+Content-Type: application/json
+
+{
+    "id": "{{providerId}}",
+    "weeklySchedule": {
+        "monday": { "start": "09:00", "end": "17:00" },
+        "tuesday": { "start": "09:00", "end": "17:00" },
+        "wednesday": { "start": "09:00", "end": "17:00" },
+        "thursday": { "start": "09:00", "end": "17:00" },
+        "friday": { "start": "09:00", "end": "17:00" }
+    },
+    "appointmentDuration": 30,
+    "timezone": "UTC"
+}
+
+### 2. Create a new appointment
+# @name createAppointment
+POST {{baseUrl}}/appointments HTTP/1.1
+Content-Type: application/json
+
+{
+    "providerId": "{{providerId}}",
+    "patientId": "{{patientId}}",
+    "startTime": "{{$datetime iso8601 1 d 10:00}}"
+}
+
+### 3. Get the created appointment using its ID
+GET {{baseUrl}}/appointments/{{createAppointment.response.body.appointmentId}} HTTP/1.1
+
+### 4. List all appointments for next 7 days
+GET {{baseUrl}}/appointments?providerId={{providerId}}&startDate={{$datetime 'YYYY-MM-DD'}}&endDate={{$datetime 'YYYY-MM-DD' 7 d}} HTTP/1.1
+
+### 5. Reschedule the created appointment
+# @name rescheduleAppointment
+PUT {{baseUrl}}/appointments/{{createAppointment.response.body.appointmentId}} HTTP/1.1
+Content-Type: application/json
+
+{
+    "startTime": "{{$datetime iso8601 2 d 14:00}}"
+}
+
+### 6. Verify rescheduled appointment
+GET {{baseUrl}}/appointments/{{createAppointment.response.body.appointmentId}} HTTP/1.1
+
+### 7. Cancel the appointment
+# @name cancelAppointment
+DELETE {{baseUrl}}/appointments/{{createAppointment.response.body.appointmentId}} HTTP/1.1
+
+### 8. Verify appointment is cancelled
+GET {{baseUrl}}/appointments/{{createAppointment.response.body.appointmentId}} HTTP/1.1
+
+### 9. Error Cases - Create appointment with non-existent provider
+# @note This should return a 404 error
+POST {{baseUrl}}/appointments HTTP/1.1
+Content-Type: application/json
+
+{
+    "providerId": "non-existent-provider",
+    "patientId": "{{patientId}}",
+    "startTime": "{{$datetime iso8601 1 d 11:00}}"
+}
+
+### 10. Error Cases - Try to reschedule a cancelled appointment
+# @note This should return a 409 error
+PUT {{baseUrl}}/appointments/{{createAppointment.response.body.appointmentId}} HTTP/1.1
+Content-Type: application/json
+
+{
+    "startTime": "{{$datetime iso8601 3 d 15:00}}"
+}
+
+### 11. Error Cases - Try to cancel an already cancelled appointment
+# @note This should return a 409 error
+DELETE {{baseUrl}}/appointments/{{createAppointment.response.body.appointmentId}} HTTP/1.1
+
+### 12. List appointments with specific filters
+GET {{baseUrl}}/appointments?providerId={{providerId}}&patientId={{patientId}}&status=CANCELLED HTTP/1.1
+
+### 13. Error Cases - Get a non-existent appointment
+# @note This should return a 404 error
+GET {{baseUrl}}/appointments/non-existent-id HTTP/1.1 
