@@ -1,3 +1,13 @@
+// Domain types
+export type ProviderId = string
+export type TimeString = string // HH:mm format
+export type Timezone = string // IANA timezone format
+
+export interface DailySchedule {
+  start: TimeString
+  end: TimeString
+}
+
 export interface WeeklySchedule {
   monday?: DailySchedule | null
   tuesday?: DailySchedule | null
@@ -8,31 +18,27 @@ export interface WeeklySchedule {
   sunday?: DailySchedule | null
 }
 
-export interface DailySchedule {
-  start: string
-  end: string
-}
-
 export interface TimeSlot {
-  startTime: string
-  endTime: string
+  startTime: TimeString
+  endTime: TimeString
 }
 
+// DTOs
 export interface CreateProviderDto {
-  id?: string
+  id?: ProviderId
   weeklySchedule?: WeeklySchedule
-  appointmentDuration?: number
-  timezone?: string
+  appointmentDuration?: number // in minutes
+  timezone?: Timezone
 }
 
 export interface UpdateProviderDto {
   weeklySchedule?: WeeklySchedule
-  appointmentDuration?: number
-  timezone?: string
+  appointmentDuration?: number // in minutes
+  timezone?: Timezone
 }
 
 export interface AvailabilityResponseDto {
-  providerId: string
-  date: string
-  availableSlots: string[]
+  providerId: ProviderId
+  date: string // YYYY-MM-DD format
+  availableSlots: TimeString[]
 }

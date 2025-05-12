@@ -4,15 +4,17 @@ import { ProviderRepository } from "./repository"
 import {
   AvailabilityResponseDto,
   CreateProviderDto,
-  DailySchedule,
-  TimeSlot,
   UpdateProviderDto,
   WeeklySchedule,
 } from "./types"
+import { AvailabilityService } from "@/modules/availability/service"
 
 @Injectable()
 export class ProviderService {
-  constructor(private readonly providerRepository: ProviderRepository) {}
+  constructor(
+    private readonly providerRepository: ProviderRepository,
+    private readonly availabilityService: AvailabilityService,
+  ) {}
 
   async getAll(): Promise<Provider[]> {
     return this.providerRepository.findAll()
@@ -48,22 +50,19 @@ export class ProviderService {
     const dateObj = new Date(date)
     const dayOfWeek = this.getDayOfWeek(dateObj)
 
-    const dailySchedule = weeklySchedule[dayOfWeek]
+    const dailySchedule = weeklySchedule[dayOfWeek] || null
 
-    if (!dailySchedule) {
-      return {
-        providerId,
-        date,
-        availableSlots: [],
-      }
-    }
-
-    const availableSlots = this.generateTimeSlots(dailySchedule, provider.appointmentDuration)
+    const availableSlots = await this.availabilityService.getAvailableSlots(
+      providerId,
+      dateObj,
+      dailySchedule,
+      provider.appointmentDuration,
+    )
 
     return {
       providerId,
       date,
-      availableSlots: availableSlots.map((slot) => slot.startTime),
+      availableSlots,
     }
   }
 
@@ -79,41 +78,6 @@ export class ProviderService {
     ]
 
     return days[date.getDay()]
-  }
-
-  private generateTimeSlots(dailySchedule: DailySchedule, appointmentDuration: number): TimeSlot[] {
-    const slots: TimeSlot[] = []
-
-    const [startHour, startMinute] = dailySchedule.start.split(":").map(Number)
-    const [endHour, endMinute] = dailySchedule.end.split(":").map(Number)
-
-    const startMinutes = startHour * 60 + startMinute
-    const endMinutes = endHour * 60 + endMinute
-
-    for (let time = startMinutes; time < endMinutes; time += appointmentDuration) {
-      if (time + appointmentDuration <= endMinutes) {
-        const hour = Math.floor(time / 60)
-        const minute = time % 60
-
-        const formattedHour = hour.toString().padStart(2, "0")
-        const formattedMinute = minute.toString().padStart(2, "0")
-
-        slots.push({
-          startTime: `${formattedHour}:${formattedMinute}`,
-          endTime: this.calculateEndTime(time, appointmentDuration),
-        })
-      }
-    }
-
-    return slots
-  }
-
-  private calculateEndTime(startMinutes: number, durationMinutes: number): string {
-    const totalMinutes = startMinutes + durationMinutes
-    const hour = Math.floor(totalMinutes / 60)
-    const minute = totalMinutes % 60
-
-    return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
   }
 
   parseWeeklySchedule(provider: Provider): WeeklySchedule {
