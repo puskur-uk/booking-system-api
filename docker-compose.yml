@@ -13,7 +13,8 @@ services:
     volumes:
       - .:/usr/src/app:cached
       - /usr/src/app/node_modules
-    command: npm run start:dev
+      - ./prisma:/usr/src/app/prisma
+    command: "npm run start:dev"
 
   database:
     image: postgres:15
@@ -25,9 +26,12 @@ services:
       POSTGRES_PASSWORD: randompassword
       POSTGRES_DB: appointments
     volumes:
-      - ./data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+volumes:
+  postgres_data:

@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "npx @biomejs/biome check --write .",
     "start": "nest start",
-    "start:dev": "npx prisma generate && npx nest start --watch",
+    "start:dev": "npx prisma generate && npx prisma db push && npx nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "test": "jest",

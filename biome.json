@@ -13,7 +13,8 @@
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 100
+    "lineWidth": 100,
+    "formatWithErrors": true
   },
   "organizeImports": {
     "enabled": true
@@ -31,6 +32,9 @@
     "formatter": {
       "quoteStyle": "double",
       "semicolons": "asNeeded"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
     }
   }
 }
