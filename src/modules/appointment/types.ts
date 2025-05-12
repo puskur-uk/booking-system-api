@@ -1,36 +1,53 @@
 import { AppointmentStatus } from "@prisma/client"
 
-export interface AppointmentResponseDto {
-  appointmentId: string
+// Domain types
+export type AppointmentTime = string // ISO string format
+export type AppointmentId = string
+export type PatientId = string
+export type ProviderId = string
+
+export interface Appointment {
+  id: AppointmentId
   status: AppointmentStatus
-  patientId: string
-  providerId: string
-  startTime: string
-  endTime: string
+  patientId: PatientId
+  providerId: ProviderId
+  startTime: AppointmentTime
+  endTime: AppointmentTime
+}
+
+// DTOs
+export interface AppointmentResponseDto {
+  appointmentId: AppointmentId
+  status: AppointmentStatus
+  patientId: PatientId
+  providerId: ProviderId
+  startTime: AppointmentTime
+  endTime: AppointmentTime
 }
 
 export interface CreateAppointmentDto {
-  patientId: string
-  providerId: string
-  startTime: string
+  patientId: PatientId
+  providerId: ProviderId
+  startTime: AppointmentTime
 }
 
 export interface RescheduleAppointmentDto {
-  startTime: string
+  startTime: AppointmentTime
 }
 
 export interface ListAppointmentsQueryDto {
-  providerId?: string
-  patientId?: string
-  startDate?: string
-  endDate?: string
+  providerId?: ProviderId
+  patientId?: PatientId
+  startDate?: AppointmentTime
+  endDate?: AppointmentTime
   status?: AppointmentStatus
 }
 
+// Domain errors
 export interface AppointmentConflictError extends Error {
   code: "APPOINTMENT_CONFLICT"
-  startTime: string
-  providerId: string
+  startTime: AppointmentTime
+  providerId: ProviderId
 }
 
 // Re-export AppointmentStatus for convenience

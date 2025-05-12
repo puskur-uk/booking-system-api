@@ -7,7 +7,7 @@ import {
   AppointmentRescheduledPayload,
   BaseEventPayload,
 } from "../event/types"
-import { ProviderService } from "../provider/service"
+import { ProviderService } from "@/modules/provider/service"
 import { AppointmentRepository } from "./repository"
 import {
   AppointmentResponseDto,
