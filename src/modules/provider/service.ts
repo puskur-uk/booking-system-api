@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common"
+import { AvailabilityService } from "@/modules/availability/service"
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common"
 import { Provider } from "@prisma/client"
 import { ProviderRepository } from "./repository"
 import {
   AvailabilityResponseDto,
   CreateProviderDto,
+  DailySchedule,
   UpdateProviderDto,
   WeeklySchedule,
-  DailySchedule,
 } from "./types"
-import { AvailabilityService } from "@/modules/availability/service"
 
 @Injectable()
 export class ProviderService {
@@ -34,7 +34,7 @@ export class ProviderService {
 
   async update(id: string, data: UpdateProviderDto): Promise<Provider> {
     await this.getById(id)
-    
+
     if (data.weeklySchedule) {
       this.validateWeeklySchedule(data.weeklySchedule)
     }
@@ -109,12 +109,14 @@ export class ProviderService {
     }
 
     const days = Object.entries(schedule) as [keyof WeeklySchedule, DailySchedule | null][]
-    
+
     for (const [day, dailySchedule] of days) {
       if (!dailySchedule) continue
 
       if (!dailySchedule.start || !dailySchedule.end) {
-        throw new BadRequestException(`Invalid schedule for ${day}: start and end times are required`)
+        throw new BadRequestException(
+          `Invalid schedule for ${day}: start and end times are required`,
+        )
       }
 
       const startTime = this.parseTimeString(dailySchedule.start)
@@ -122,7 +124,7 @@ export class ProviderService {
 
       if (startTime >= endTime) {
         throw new BadRequestException(
-          `Invalid schedule for ${day}: end time must be after start time`
+          `Invalid schedule for ${day}: end time must be after start time`,
         )
       }
     }
@@ -132,11 +134,11 @@ export class ProviderService {
     // Validate format: HH:mm
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
       throw new BadRequestException(
-        `Invalid time format: ${time}. Expected format: HH:mm (24-hour format with leading zeros)`
+        `Invalid time format: ${time}. Expected format: HH:mm (24-hour format with leading zeros)`,
       )
     }
 
-    const [hours, minutes] = time.split(':').map(Number)
+    const [hours, minutes] = time.split(":").map(Number)
     return hours * 60 + minutes
   }
 }

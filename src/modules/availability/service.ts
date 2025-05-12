@@ -1,13 +1,13 @@
-import { Injectable, Inject, forwardRef } from "@nestjs/common"
-import { AppointmentStatus } from "@prisma/client"
 import { AppointmentRepository } from "@/modules/appointment/repository"
+import { Inject, Injectable, forwardRef } from "@nestjs/common"
+import { AppointmentStatus } from "@prisma/client"
 import { DailySchedule, TimeSlot } from "./types"
 
 @Injectable()
 export class AvailabilityService {
   constructor(
     @Inject(forwardRef(() => AppointmentRepository))
-    private readonly appointmentRepository: AppointmentRepository
+    private readonly appointmentRepository: AppointmentRepository,
   ) {}
 
   async getAvailableSlots(
@@ -46,7 +46,11 @@ export class AvailabilityService {
     }))
   }
 
-  private findAvailableSlots(potentialSlots: TimeSlot[], bookedSlots: TimeSlot[], date: Date): string[] {
+  private findAvailableSlots(
+    potentialSlots: TimeSlot[],
+    bookedSlots: TimeSlot[],
+    date: Date,
+  ): string[] {
     return potentialSlots
       .filter((slot) => !this.isSlotBooked(slot, bookedSlots, date))
       .map((slot) => slot.startTime)
@@ -103,4 +107,4 @@ export class AvailabilityService {
   private formatTime(date: Date): string {
     return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
   }
-} 
+}

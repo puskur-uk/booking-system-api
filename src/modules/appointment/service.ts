@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto"
+import { ProviderService } from "@/modules/provider/service"
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common"
 import { Appointment, AppointmentStatus } from "@prisma/client"
 import { EventService } from "../event/service"
@@ -7,7 +9,6 @@ import {
   AppointmentRescheduledPayload,
   BaseEventPayload,
 } from "../event/types"
-import { ProviderService } from "@/modules/provider/service"
 import { AppointmentRepository } from "./repository"
 import {
   AppointmentResponseDto,
@@ -15,7 +16,6 @@ import {
   ListAppointmentsQueryDto,
   RescheduleAppointmentDto,
 } from "./types"
-import { randomUUID } from "node:crypto"
 
 export const EVENT_TYPES = {
   APPOINTMENT_CONFIRMED: "APPOINTMENT_CONFIRMED",

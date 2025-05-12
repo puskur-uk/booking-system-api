@@ -1,5 +1,5 @@
-import { Module, forwardRef } from "@nestjs/common"
 import { AppointmentModule } from "@/modules/appointment/module"
+import { Module, forwardRef } from "@nestjs/common"
 import { AvailabilityService } from "./service"
 
 @Module({
@@ -7,4 +7,4 @@ import { AvailabilityService } from "./service"
   providers: [AvailabilityService],
   exports: [AvailabilityService],
 })
-export class AvailabilityModule {} 
+export class AvailabilityModule {}

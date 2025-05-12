@@ -16,4 +16,4 @@ export interface WeeklySchedule {
   friday?: DailySchedule | null
   saturday?: DailySchedule | null
   sunday?: DailySchedule | null
-} 
+}

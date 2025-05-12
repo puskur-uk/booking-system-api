@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from "@nestjs/common"
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common"
 import { Appointment, AppointmentStatus } from "@prisma/client"
 import { PrismaService } from "../database/service"
 
@@ -19,8 +19,8 @@ export class AppointmentRepository {
           providerId: data.providerId,
           status: { not: AppointmentStatus.CANCELLED },
           startTime: { lte: data.endTime },
-          endTime: { gte: data.startTime }
-        }
+          endTime: { gte: data.startTime },
+        },
       })
 
       if (conflict) {
@@ -28,18 +28,21 @@ export class AppointmentRepository {
       }
 
       return tx.appointment.create({
-        data
+        data,
       })
     })
   }
 
-  async rescheduleWithTransaction(id: string, data: {
-    startTime: Date
-    endTime: Date
-  }): Promise<Appointment> {
+  async rescheduleWithTransaction(
+    id: string,
+    data: {
+      startTime: Date
+      endTime: Date
+    },
+  ): Promise<Appointment> {
     return this.prisma.$transaction(async (tx) => {
       const appointment = await tx.appointment.findUnique({
-        where: { id }
+        where: { id },
       })
 
       if (!appointment) {
@@ -56,8 +59,8 @@ export class AppointmentRepository {
           status: { not: AppointmentStatus.CANCELLED },
           id: { not: id },
           startTime: { lte: data.endTime },
-          endTime: { gte: data.startTime }
-        }
+          endTime: { gte: data.startTime },
+        },
       })
 
       if (conflict) {
@@ -69,8 +72,8 @@ export class AppointmentRepository {
         data: {
           startTime: data.startTime,
           endTime: data.endTime,
-          status: AppointmentStatus.CONFIRMED
-        }
+          status: AppointmentStatus.CONFIRMED,
+        },
       })
     })
   }
@@ -112,7 +115,7 @@ export class AppointmentRepository {
         status: { not: AppointmentStatus.CANCELLED },
         id: excludeAppointmentId ? { not: excludeAppointmentId } : undefined,
         startTime: { lte: endTime },
-        endTime: { gte: startTime }
+        endTime: { gte: startTime },
       },
     })
   }

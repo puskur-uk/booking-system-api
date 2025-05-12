@@ -12,7 +12,12 @@ import {
 } from "@nestjs/common"
 import { Provider } from "@prisma/client"
 import { ProviderService } from "./service"
-import { AvailabilityResponseDto, CreateProviderDto, UpdateProviderDto, UpdateProviderScheduleDto } from "./types"
+import {
+  AvailabilityResponseDto,
+  CreateProviderDto,
+  UpdateProviderDto,
+  UpdateProviderScheduleDto,
+} from "./types"
 
 @Controller("providers")
 export class ProviderController {
@@ -63,4 +68,3 @@ export class ProviderController {
     return this.providerService.update(id, data)
   }
 }
-
