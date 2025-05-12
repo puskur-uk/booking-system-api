@@ -63,3 +63,4 @@ export class ProviderController {
     return this.providerService.update(id, data)
   }
 }
+

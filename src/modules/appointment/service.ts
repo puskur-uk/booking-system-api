@@ -15,6 +15,7 @@ import {
   ListAppointmentsQueryDto,
   RescheduleAppointmentDto,
 } from "./types"
+import { randomUUID } from "node:crypto"
 
 export const EVENT_TYPES = {
   APPOINTMENT_CONFIRMED: "APPOINTMENT_CONFIRMED",
@@ -30,6 +31,14 @@ export class AppointmentService {
     private readonly eventService: EventService,
   ) {}
 
+  private createEventPayload<T extends BaseEventPayload>(data: Omit<T, keyof BaseEventPayload>): T {
+    return {
+      ...data,
+      eventId: randomUUID(),
+      timestamp: new Date().toISOString(),
+    } as T
+  }
+
   private mapToResponseDto(appointment: Appointment): AppointmentResponseDto {
     return {
       appointmentId: appointment.id,
@@ -41,14 +50,6 @@ export class AppointmentService {
     }
   }
 
-  private createEventPayload<T extends BaseEventPayload>(data: Omit<T, keyof BaseEventPayload>): T {
-    return {
-      ...data,
-      eventId: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-    } as T
-  }
-
   async create(data: CreateAppointmentDto): Promise<AppointmentResponseDto> {
     const provider = await this.providerService.getById(data.providerId)
     if (!provider) {
@@ -56,32 +57,34 @@ export class AppointmentService {
     }
 
     const startTime = new Date(data.startTime)
-    const conflict = await this.appointmentRepository.findConflict(data.providerId, startTime)
-    if (conflict) {
-      throw new ConflictException("Time slot is not available")
-    }
-
     const endTime = new Date(startTime.getTime() + provider.appointmentDuration * 60000)
 
-    const appointment = await this.appointmentRepository.create({
-      patientId: data.patientId,
-      providerId: data.providerId,
-      startTime,
-      endTime,
-      status: AppointmentStatus.CONFIRMED,
-    })
+    try {
+      const appointment = await this.appointmentRepository.createWithTransaction({
+        patientId: data.patientId,
+        providerId: data.providerId,
+        startTime,
+        endTime,
+        status: AppointmentStatus.CONFIRMED,
+      })
 
-    await this.eventService.emitEvent(
-      EVENT_TYPES.APPOINTMENT_CONFIRMED,
-      this.createEventPayload<AppointmentConfirmedPayload>({
-        appointmentId: appointment.id,
-        patientId: appointment.patientId,
-        providerId: appointment.providerId,
-        appointmentTime: appointment.startTime.toISOString(),
-      }),
-    )
+      await this.eventService.emitEvent(
+        EVENT_TYPES.APPOINTMENT_CONFIRMED,
+        this.createEventPayload<AppointmentConfirmedPayload>({
+          appointmentId: appointment.id,
+          patientId: appointment.patientId,
+          providerId: appointment.providerId,
+          appointmentTime: appointment.startTime.toISOString(),
+        }),
+      )
 
-    return this.mapToResponseDto(appointment)
+      return this.mapToResponseDto(appointment)
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        throw error
+      }
+      throw new ConflictException("Failed to create appointment")
+    }
   }
 
   async reschedule(id: string, data: RescheduleAppointmentDto): Promise<AppointmentResponseDto> {
@@ -90,43 +93,36 @@ export class AppointmentService {
       throw new NotFoundException("Appointment not found")
     }
 
-    if (appointment.status === AppointmentStatus.CANCELLED) {
-      throw new ConflictException("Cannot reschedule cancelled appointment")
-    }
-
-    const newStartTime = new Date(data.startTime)
-    const conflict = await this.appointmentRepository.findConflict(
-      appointment.providerId,
-      newStartTime,
-      appointment.id,
-    )
-    if (conflict) {
-      throw new ConflictException("New time slot is not available")
-    }
-
     const provider = await this.providerService.getById(appointment.providerId)
+    const newStartTime = new Date(data.startTime)
     const newEndTime = new Date(newStartTime.getTime() + provider.appointmentDuration * 60000)
 
     const previousAppointmentTime = appointment.startTime.toISOString()
 
-    const updatedAppointment = await this.appointmentRepository.update(id, {
-      startTime: newStartTime,
-      endTime: newEndTime,
-      status: AppointmentStatus.CONFIRMED,
-    })
+    try {
+      const updatedAppointment = await this.appointmentRepository.rescheduleWithTransaction(id, {
+        startTime: newStartTime,
+        endTime: newEndTime,
+      })
 
-    await this.eventService.emitEvent(
-      EVENT_TYPES.APPOINTMENT_RESCHEDULED,
-      this.createEventPayload<AppointmentRescheduledPayload>({
-        appointmentId: updatedAppointment.id,
-        patientId: updatedAppointment.patientId,
-        providerId: updatedAppointment.providerId,
-        newAppointmentTime: updatedAppointment.startTime.toISOString(),
-        previousAppointmentTime,
-      }),
-    )
+      await this.eventService.emitEvent(
+        EVENT_TYPES.APPOINTMENT_RESCHEDULED,
+        this.createEventPayload<AppointmentRescheduledPayload>({
+          appointmentId: updatedAppointment.id,
+          patientId: updatedAppointment.patientId,
+          providerId: updatedAppointment.providerId,
+          newAppointmentTime: updatedAppointment.startTime.toISOString(),
+          previousAppointmentTime,
+        }),
+      )
 
-    return this.mapToResponseDto(updatedAppointment)
+      return this.mapToResponseDto(updatedAppointment)
+    } catch (error) {
+      if (error instanceof ConflictException || error instanceof NotFoundException) {
+        throw error
+      }
+      throw new ConflictException("Failed to reschedule appointment")
+    }
   }
 
   async cancel(id: string): Promise<void> {

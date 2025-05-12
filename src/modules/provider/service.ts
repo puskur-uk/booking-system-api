@@ -91,20 +91,31 @@ export class ProviderService {
         return provider.weeklySchedule as unknown as WeeklySchedule
       }
 
-      return JSON.parse(provider.weeklySchedule as string) as WeeklySchedule
+      const schedule = JSON.parse(provider.weeklySchedule as string) as WeeklySchedule
+      this.validateWeeklySchedule(schedule)
+
+      return schedule
     } catch (error) {
-      console.error("Error parsing weekly schedule:", error)
-      return {}
+      if (error instanceof BadRequestException) {
+        throw error
+      }
+      throw new BadRequestException("Invalid weekly schedule format")
     }
   }
 
   private validateWeeklySchedule(schedule: WeeklySchedule): void {
-    if (!schedule) return
+    if (!schedule || typeof schedule !== "object") {
+      throw new BadRequestException("Invalid weekly schedule format")
+    }
 
     const days = Object.entries(schedule) as [keyof WeeklySchedule, DailySchedule | null][]
     
     for (const [day, dailySchedule] of days) {
       if (!dailySchedule) continue
+
+      if (!dailySchedule.start || !dailySchedule.end) {
+        throw new BadRequestException(`Invalid schedule for ${day}: start and end times are required`)
+      }
 
       const startTime = this.parseTimeString(dailySchedule.start)
       const endTime = this.parseTimeString(dailySchedule.end)

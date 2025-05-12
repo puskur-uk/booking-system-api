@@ -2,6 +2,7 @@
 @baseUrl = http://localhost:3000/api
 @providerId = 123e4567-e89b-12d3-a456-426614174000
 @patientId = 987fcdeb-51a2-43d8-b4c5-9876543210ab
+@patientId2 = 987fcdeb-51a2-43d8-b4c5-9876543210ac
 
 ### 1. Create a provider first
 # @name createProvider
@@ -150,4 +151,70 @@ Content-Type: application/json
     "weeklySchedule": {
         "monday": { "start": "9:00", "end": "17:00" }
     }
+}
+
+### 20. Transaction Tests - Create overlapping appointments
+# @note First appointment
+POST {{baseUrl}}/appointments HTTP/1.1
+Content-Type: application/json
+
+{
+    "providerId": "{{providerId}}",
+    "patientId": "{{patientId}}",
+    "startTime": "{{$datetime iso8601 1 d 13:00}}"
+}
+
+### 21. Transaction Tests - Try to create overlapping appointment
+# @note This should return a 409 error due to transaction-based conflict prevention
+POST {{baseUrl}}/appointments HTTP/1.1
+Content-Type: application/json
+
+{
+    "providerId": "{{providerId}}",
+    "patientId": "{{patientId2}}",
+    "startTime": "{{$datetime iso8601 1 d 13:15}}"
+}
+
+### 22. Transaction Tests - Create appointment with partial overlap
+# @note This should return a 409 error due to transaction-based conflict prevention
+POST {{baseUrl}}/appointments HTTP/1.1
+Content-Type: application/json
+
+{
+    "providerId": "{{providerId}}",
+    "patientId": "{{patientId2}}",
+    "startTime": "{{$datetime iso8601 1 d 12:45}}"
+}
+
+### 23. Transaction Tests - Create appointment with exact overlap
+# @note This should return a 409 error due to transaction-based conflict prevention
+POST {{baseUrl}}/appointments HTTP/1.1
+Content-Type: application/json
+
+{
+    "providerId": "{{providerId}}",
+    "patientId": "{{patientId2}}",
+    "startTime": "{{$datetime iso8601 1 d 13:00}}"
+}
+
+### 24. Transaction Tests - Create appointment with end time overlap
+# @note This should return a 409 error due to transaction-based conflict prevention
+POST {{baseUrl}}/appointments HTTP/1.1
+Content-Type: application/json
+
+{
+    "providerId": "{{providerId}}",
+    "patientId": "{{patientId2}}",
+    "startTime": "{{$datetime iso8601 1 d 13:45}}"
+}
+
+### 25. Transaction Tests - Create valid appointment after cancelled one
+# @note This should succeed as cancelled appointments don't block slots
+POST {{baseUrl}}/appointments HTTP/1.1
+Content-Type: application/json
+
+{
+    "providerId": "{{providerId}}",
+    "patientId": "{{patientId2}}",
+    "startTime": "{{$datetime iso8601 1 d 13:00}}"
 } 
