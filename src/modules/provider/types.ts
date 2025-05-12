@@ -37,6 +37,12 @@ export interface UpdateProviderDto {
   timezone?: Timezone
 }
 
+export interface UpdateProviderScheduleDto {
+  weeklySchedule: WeeklySchedule
+  appointmentDuration?: number // in minutes
+  timezone?: Timezone
+}
+
 export interface AvailabilityResponseDto {
   providerId: ProviderId
   date: string // YYYY-MM-DD format

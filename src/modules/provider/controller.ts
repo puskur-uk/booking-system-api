@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common"
 import { Provider } from "@prisma/client"
 import { ProviderService } from "./service"
-import { AvailabilityResponseDto, CreateProviderDto, UpdateProviderDto } from "./types"
+import { AvailabilityResponseDto, CreateProviderDto, UpdateProviderDto, UpdateProviderScheduleDto } from "./types"
 
 @Controller("providers")
 export class ProviderController {
@@ -53,5 +53,13 @@ export class ProviderController {
     @Query("date") date: string,
   ): Promise<AvailabilityResponseDto> {
     return this.providerService.getAvailability(id, date)
+  }
+
+  @Post(":id/schedule")
+  async updateProviderSchedule(
+    @Param("id") id: string,
+    @Body() data: UpdateProviderScheduleDto,
+  ): Promise<Provider> {
+    return this.providerService.update(id, data)
   }
 }
